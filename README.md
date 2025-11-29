@@ -1,30 +1,90 @@
-# SecuriView 
+# SecuriView  
+**AI-Ready Static Application Security Scanner**
 
-SecuriView is an AI-ready static analysis backend for detecting common web vulnerabilities in source code.
+SecuriView is a modular security scanner that detects high-impact vulnerabilities in source code using rule-based analysis and optional AI explanations.  
+It includes a clean frontend UI, multiple detectors, and a weighted risk-scoring system—making it a lightweight mini-SAST tool.
 
-## Features (current)
+---
 
-- **SQL Injection detection**
-  - Flags dynamic string concatenation in SQL queries
-- **Cross-Site Scripting (XSS) detection**
-  - Detects dangerous DOM sinks (e.g., `innerHTML`, `document.write`)
-  - Warns about raw HTML construction with unescaped variables
-- **Secrets / Credentials detection**
-  - AWS access keys (`AKIA...`)
-  - Private key blocks
-  - Hardcoded API keys, tokens, passwords
+## Features
 
-## Tech stack
+### Vulnerability Detection (OWASP-aligned)
+SecuriView detects:
 
-- Python 3
-- FastAPI
-- Uvicorn
+- **SQL Injection**
+- **Cross-Site Scripting (XSS)**
+- **Hardcoded Secrets**
+- **Command Injection**
+- **Dangerous Eval / Dynamic Code Execution**
+- **Path Traversal**
+- **Weak / Misconfigured Crypto**
+- **JWT Misuse**
+- **Open Redirects**
 
-## Running locally
+Each finding includes:
+- Severity level  
+- Line number  
+- Snippet  
+- Rule-based recommendation  
 
+---
+
+### AI-Enhanced Mode (Optional)
+The `/analyze/ai` endpoint produces:
+
+- Natural-language explanations  
+- Fix recommendations  
+- Attack scenarios  
+- Per-finding context  
+
+LLM integration is optional—the project is already structured to plug in models like Gemini or OpenAI.
+
+---
+
+### Risk Scoring  
+Each run returns an **overall risk score (0–100)** based on weighted severity.
+
+---
+
+### Modular Detector Architecture  
+Each detector lives independently under `/detectors`, making the system easy to extend:
+detectors/
+sql_injection.py
+xss.py
+secrets.py
+command_injection.py
+dangerous_eval.py
+crypto.py
+jwt.py
+path_traversal.py
+open_redirect.py
+shared.py
+---
+
+### Frontend User Interface  
+A lightweight HTML/JS UI allows:
+
+- Pasting code  
+- Selecting language  
+- Choosing rule-based or AI mode  
+- Viewing detailed cards for each finding  
+
+Served automatically at:
+http://127.0.0.1:8000
+---
+
+## Getting Started
+
+### 1. Install dependencies
 ```bash
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-python -m pip install "fastapi[standard]" python-multipart
+pip install -r requirements.txt
+```
+### 2. Run the backend
 
 uvicorn main:app --reload
+
+### 3. Open the UI
+
+http://127.0.0.1:8000
+
+
