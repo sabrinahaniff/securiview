@@ -1,7 +1,9 @@
 from typing import List, Optional
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from models import (
     CodeAnalysisRequest,
@@ -26,6 +28,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    """Serve the frontend UI."""
+    html_path = Path("frontend/index.html")
+    return html_path.read_text(encoding="utf-8")
 
 
 @app.get("/health")

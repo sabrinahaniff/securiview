@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SecuriView – Code Security Scanner</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 4px;
+    }
+    h2 {
+      margin-top: 24px;
+      margin-bottom: 8px;
+      font-size: 1.2rem;
+    }
+    p.subtitle {
+      margin-top: 0;
+      color: #9ca3af;
+      font-size: 0.95rem;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    label {
+      font-size: 0.9rem;
+      color: #cbd5f5;
+    }
+    select {
+      background: #020617;
+      color: #e5e7eb;
+      border-radius: 6px;
+      border: 1px solid #1e293b;
+      padding: 4px 8px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 230px;
+      background: #020617;
+      color: #e5e7eb;
+      border-radius: 10px;
+      border: 1px solid #1e293b;
+      padding: 10px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    textarea:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 1px #38bdf8;
+    }
+    .scan-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #38bdf8;
+      color: #020617;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .mode-toggle {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+    .status {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #a5b4fc;
+    }
+    .error {
+      color: #fecaca;
+    }
+    .results {
+      margin-top: 20px;
+    }
+    .risk-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #1d4ed8;
+      font-size: 0.8rem;
+      color: #bfdbfe;
+      margin-bottom: 10px;
+    }
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card {
+      background: #020617;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      padding: 12px 14px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.78rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-type {
+      background: #0f172a;
+      border-color: #38bdf8;
+      color: #e0f2fe;
+    }
+    .badge-severity-HIGH,
+    .badge-severity-CRITICAL {
+      background: #7f1d1d;
+      border-color: #f97316;
+      color: #fee2e2;
+    }
+    .badge-severity-MEDIUM {
+      background: #78350f;
+      border-color: #facc15;
+      color: #fef9c3;
+    }
+    .badge-severity-LOW {
+      background: #064e3b;
+      border-color: #22c55e;
+      color: #bbf7d0;
+    }
+    .line-info {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    .snippet {
+      margin-top: 6px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: #020617;
+      border: 1px solid #111827;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+    }
+    .section-label {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #cbd5f5;
+    }
+    .small-text {
+      font-size: 0.82rem;
+      color: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>SecuriView</h1>
+    <p class="subtitle">
+      Paste code, select a language, and scan for SQL injection, XSS, and hardcoded secrets.
+    </p>
+
+    <div class="controls">
+      <div>
+        <label for="language">Language</label><br />
+        <select id="language">
+          <option value="">Auto / mixed</option>
+          <option value="python">Python</option>
+          <option value="javascript">JavaScript</option>
+          <option value="php">PHP</option>
+          <option value="sql">SQL</option>
+        </select>
+      </div>
+      <div>
+        <label for="mode">Mode</label><br />
+        <select id="mode">
+          <option value="ai">Scan with AI-style explanations</option>
+          <option value="basic">Scan (rules only)</option>
+        </select>
+      </div>
+    </div>
+
+    <h2>Code</h2>
+    <textarea id="code" placeholder="Paste your source code here..."></textarea>
+
+    <div class="scan-row">
+      <button id="scanBtn">Scan Code</button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="results" id="results"></div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+
+    const codeEl = document.getElementById("code");
+    const langEl = document.getElementById("language");
+    const modeEl = document.getElementById("mode");
+    const scanBtn = document.getElementById("scanBtn");
+    const statusEl = document.getElementById("status");
+    const resultsEl = document.getElementById("results");
+
+    scanBtn.addEventListener("click", async () => {
+      const code = codeEl.value.trim();
+      const language = langEl.value || null;
+      const mode = modeEl.value;
+
+      if (!code) {
+        statusEl.textContent = "Please paste some code to scan.";
+        statusEl.classList.add("error");
+        return;
+      }
+      statusEl.classList.remove("error");
+      statusEl.textContent = "Scanning...";
+      scanBtn.disabled = true;
+      resultsEl.innerHTML = "";
+
+      const endpoint = mode === "ai" ? "/analyze/ai" : "/analyze";
+
+      try {
+        const res = await fetch(API_BASE + endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, language }),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          statusEl.textContent = `Error ${res.status}: ${text}`;
+          statusEl.classList.add("error");
+          scanBtn.disabled = false;
+          return;
+        }
+
+        const data = await res.json();
+        statusEl.textContent = "Scan complete.";
+        renderResults(data, mode === "ai");
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Network or server error. Is the backend running?";
+        statusEl.classList.add("error");
+      } finally {
+        scanBtn.disabled = false;
+      }
+    });
+
+    function renderResults(data, hasAI) {
+      const { findings, risk_score, ai_explanations } = data;
+      resultsEl.innerHTML = "";
+
+      const header = document.createElement("div");
+      header.className = "risk-pill";
+      header.textContent = `Overall risk score: ${risk_score} / 100`;
+      resultsEl.appendChild(header);
+
+      if (!findings || findings.length === 0) {
+        const p = document.createElement("p");
+        p.className = "small-text";
+        p.textContent = "No findings detected by the current ruleset.";
+        resultsEl.appendChild(p);
+        return;
+      }
+
+      const aiByFinding = {};
+      if (hasAI && Array.isArray(ai_explanations)) {
+        ai_explanations.forEach((ai) => {
+          aiByFinding[ai.finding_id] = ai;
+        });
+      }
+
+      const cardsContainer = document.createElement("div");
+      cardsContainer.className = "cards";
+
+      findings.forEach((f) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const header = document.createElement("div");
+        header.className = "card-header";
+
+        const left = document.createElement("div");
+        const typeBadge = document.createElement("span");
+        typeBadge.className = "badge badge-type";
+        typeBadge.textContent = f.type;
+
+        const severityBadge = document.createElement("span");
+        severityBadge.className = "badge badge-severity-" + f.severity;
+        severityBadge.textContent = f.severity;
+
+        left.appendChild(typeBadge);
+        left.appendChild(document.createTextNode(" "));
+        left.appendChild(severityBadge);
+
+        const lineInfo = document.createElement("span");
+        lineInfo.className = "line-info";
+        lineInfo.textContent = f.line ? `Line ${f.line}` : "";
+
+        header.appendChild(left);
+        header.appendChild(lineInfo);
+
+        const desc = document.createElement("div");
+        desc.className = "small-text";
+        desc.textContent = f.description;
+
+        const snippet = document.createElement("div");
+        snippet.className = "snippet";
+        snippet.textContent = f.snippet || "(no snippet available)";
+
+        const recLabel = document.createElement("div");
+        recLabel.className = "section-label";
+        recLabel.textContent = "Rule-based recommendation";
+
+        const rec = document.createElement("div");
+        rec.className = "small-text";
+        rec.textContent = f.recommendation || "Review this code manually.";
+
+        card.appendChild(header);
+        card.appendChild(desc);
+        card.appendChild(snippet);
+        card.appendChild(recLabel);
+        card.appendChild(rec);
+
+        if (hasAI && aiByFinding[f.id]) {
+          const ai = aiByFinding[f.id];
+
+          const aiLabel = document.createElement("div");
+          aiLabel.className = "section-label";
+          aiLabel.textContent = "AI-style explanation";
+
+          const aiText = document.createElement("div");
+          aiText.className = "small-text";
+          aiText.textContent = ai.explanation;
+
+          const fixLabel = document.createElement("div");
+          fixLabel.className = "section-label";
+          fixLabel.textContent = "AI-style fix suggestion";
+
+          const fixText = document.createElement("div");
+          fixText.className = "small-text";
+          fixText.textContent = ai.fix_suggestion;
+
+          card.appendChild(aiLabel);
+          card.appendChild(aiText);
+          card.appendChild(fixLabel);
+          card.appendChild(fixText);
+
+          if (ai.attack_scenario) {
+            const atkLabel = document.createElement("div");
+            atkLabel.className = "section-label";
+            atkLabel.textContent = "Attack scenario";
+
+            const atkText = document.createElement("div");
+            atkText.className = "small-text";
+            atkText.textContent = ai.attack_scenario;
+
+            card.appendChild(atkLabel);
+            card.appendChild(atkText);
+          }
+        }
+
+        cardsContainer.appendChild(card);
+      });
+
+      resultsEl.appendChild(cardsContainer);
+    }
+  </script>
+</body>
+</html>
