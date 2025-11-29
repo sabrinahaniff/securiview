@@ -1,7 +1,8 @@
 import re
 from typing import List, Optional
+
 from models import VulnerabilityFinding
-from detectors.shared import new_finding
+from detectors.shared import make_finding
 
 
 # Very simple patterns to start with.
@@ -21,14 +22,16 @@ SQLI_SUSPICIOUS_PATTERNS = [
 def detect_sql_injection(
     code: str,
     language: Optional[str] = None,
-    start_id: int = 0,
+    start_id: int = 1,
 ) -> List[VulnerabilityFinding]:
     findings: List[VulnerabilityFinding] = []
     lines = code.splitlines()
 
-    next_id = start_id
+    current_id = start_id
 
-    for line_no, line in enumerate(lines, start=1):
+    for idx, raw_line in enumerate(lines, start=1):
+        line = raw_line.strip()
+
         for pattern in SQLI_SUSPICIOUS_PATTERNS:
             if re.search(pattern, line, flags=re.IGNORECASE):
                 desc = (
@@ -39,18 +42,21 @@ def detect_sql_injection(
                     "Use parameterized queries / prepared statements instead of building SQL strings with "
                     "user input. For example, use placeholders (?, $1, :name) and pass values separately."
                 )
+
                 findings.append(
-                    new_finding(
-                        id_value=next_id,
-                        vtype="SQL_INJECTION",
+                    make_finding(
+                        id=current_id,
+                        type="SQL_INJECTION",
                         severity="HIGH",
                         description=desc,
-                        line=line_no,
-                        snippet=line.strip(),
+                        line=idx,
+                        snippet=line,
                         recommendation=rec,
+                        owasp="OWASP A03: Injection",
                     )
                 )
-                next_id += 1
+
+                current_id += 1
                 # Avoid duplicating the same line for multiple patterns
                 break
 

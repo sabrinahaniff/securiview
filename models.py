@@ -1,38 +1,55 @@
-from typing import List, Literal, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel
 
+# All vulnerability types our detectors may emit
+FindingType = Literal[
+    "SQL_INJECTION",
+    "XSS",
+    "SECRET",
+    "COMMAND_INJECTION",
+    "DANGEROUS_EVAL",
+    "PATH_TRAVERSAL",
+    "CRYPTO",
+    "JWT",
+    "OPEN_REDIRECT",
+]
 
-class CodeAnalysisRequest(BaseModel):
-    """What the client sends us."""
-    code: str
-    language: Optional[str] = None  # "python", "javascript", "php"
+SeverityType = Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 
 
 class VulnerabilityFinding(BaseModel):
-    """One detected issue in the code."""
     id: int
-    type: Literal["SQL_INJECTION", "XSS", "SECRET"]
-    severity: Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    type: FindingType
+    severity: SeverityType
     description: str
-    line: Optional[int] = None       # line number in the code (1-based)
-    snippet: Optional[str] = None    # the code line or fragment
-    recommendation: Optional[str] = None  # how to fix / improve
+    line: Optional[int] = None
+    snippet: Optional[str] = None
+    recommendation: Optional[str] = None
+    rule_id: Optional[str] = None
+
+    # NEW: OWASP category label, e.g. "OWASP A03: Injection"
+    owasp: Optional[str] = None
 
 
 class AnalysisResponse(BaseModel):
-    """Whole analysis result."""
+    """Base response for /analyze (rule-based only)."""
     findings: List[VulnerabilityFinding]
-    risk_score: int  # 0–100
+    risk_score: int
 
 
 class AIExplanation(BaseModel):
-    """Extra AI context tied to a particular finding."""
     finding_id: int
-    explanation: str          # high-level reasoning
-    fix_suggestion: str       # how to fix it in practice
-    attack_scenario: Optional[str] = None  # e.g. "An attacker could..."
+    explanation: str
+    fix_suggestion: str
+    attack_scenario: Optional[str] = None
 
 
 class AIAnalysisResponse(AnalysisResponse):
-    """Normal analysis + AI-generated explanations."""
-    ai_explanations: List[AIExplanation]
+    """Extended response for /analyze/ai with extra explanations."""
+    ai_explanations: List[AIExplanation] = []
+
+
+class CodeAnalysisRequest(BaseModel):
+    code: str
+    language: Optional[str] = None  # "python", "javascript", etc.
+    mode: Optional[str] = None      # unused for now, but harmless

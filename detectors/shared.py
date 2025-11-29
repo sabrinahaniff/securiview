@@ -1,23 +1,52 @@
-from typing import Literal, Optional
-from models import VulnerabilityFinding
+from typing import Optional
+from models import VulnerabilityFinding, FindingType, SeverityType
 
 
-def new_finding(
-    id_value: int,
-    vtype: Literal["SQL_INJECTION", "XSS", "SECRET"],
-    severity: Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+def _build_finding(
+    *,
+    id: int,
+    type: FindingType,
+    severity: SeverityType,
     description: str,
     line: Optional[int] = None,
     snippet: Optional[str] = None,
     recommendation: Optional[str] = None,
+    rule_id: Optional[str] = None,
+    owasp: Optional[str] = None,
 ) -> VulnerabilityFinding:
-    """Small helper so all findings are created the same way."""
     return VulnerabilityFinding(
-        id=id_value,
-        type=vtype,
+        id=id,
+        type=type,
         severity=severity,
         description=description,
         line=line,
         snippet=snippet,
         recommendation=recommendation,
+        rule_id=rule_id,
+        owasp=owasp,
+    )
+
+
+def make_finding(
+    *,
+    id: int,
+    type: FindingType,
+    severity: SeverityType,
+    description: str,
+    line: Optional[int] = None,
+    snippet: Optional[str] = None,
+    recommendation: Optional[str] = None,
+    rule_id: Optional[str] = None,
+    owasp: Optional[str] = None,
+) -> VulnerabilityFinding:
+    return _build_finding(
+        id=id,
+        type=type,
+        severity=severity,
+        description=description,
+        line=line,
+        snippet=snippet,
+        recommendation=recommendation,
+        rule_id=rule_id,
+        owasp=owasp,
     )

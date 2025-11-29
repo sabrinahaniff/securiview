@@ -164,6 +164,12 @@
       border-color: #22c55e;
       color: #bbf7d0;
     }
+    /* NEW: OWASP badge */
+    .badge-owasp {
+      background: #020617;
+      border-color: #22c55e;
+      color: #bbf7d0;
+    }
     .line-info {
       font-size: 0.8rem;
       color: #9ca3af;
@@ -194,7 +200,7 @@
   <div class="page">
     <h1>SecuriView</h1>
     <p class="subtitle">
-      Paste code, select a language, and scan for SQL injection, XSS, and hardcoded secrets.
+      Paste code, select a language, and scan for injection, XSS, secrets, command injection, and more.
     </p>
 
     <div class="controls">
@@ -230,6 +236,19 @@
 
   <script>
     const API_BASE = "http://127.0.0.1:8000";
+
+    // NEW: map internal types to OWASP categories
+    const owaspMap = {
+      SQL_INJECTION: "OWASP A03: Injection",
+      XSS: "OWASP A03: Injection",
+      SECRET: "OWASP A02: Cryptographic Failures",
+      COMMAND_INJECTION: "OWASP A03: Injection",
+      DANGEROUS_EVAL: "OWASP A08: Software Integrity",
+      PATH_TRAVERSAL: "OWASP A01: Broken Access Control",
+      CRYPTO: "OWASP A02: Cryptographic Failures",
+      JWT: "OWASP A01: Broken Access Control",
+      OPEN_REDIRECT: "OWASP A01: Broken Access Control",
+    };
 
     const codeEl = document.getElementById("code");
     const langEl = document.getElementById("language");
@@ -317,6 +336,7 @@
         header.className = "card-header";
 
         const left = document.createElement("div");
+
         const typeBadge = document.createElement("span");
         typeBadge.className = "badge badge-type";
         typeBadge.textContent = f.type;
@@ -325,9 +345,17 @@
         severityBadge.className = "badge badge-severity-" + f.severity;
         severityBadge.textContent = f.severity;
 
+        // NEW: OWASP badge
+        const owaspLabel = owaspMap[f.type] || "OWASP: n/a";
+        const owaspBadge = document.createElement("span");
+        owaspBadge.className = "badge badge-owasp";
+        owaspBadge.textContent = owaspLabel;
+
         left.appendChild(typeBadge);
         left.appendChild(document.createTextNode(" "));
         left.appendChild(severityBadge);
+        left.appendChild(document.createTextNode(" "));
+        left.appendChild(owaspBadge);
 
         const lineInfo = document.createElement("span");
         lineInfo.className = "line-info";
